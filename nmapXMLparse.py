@@ -55,7 +55,7 @@ if opts.outName:
 				overwrite = True
 				break
 		else:
-			print("[!] You have provided to many invalid choices. Goodbye.")
+			print("\n[!] You have provided to many invalid choices. Goodbye.")
 			sys.exit()
 		
 	else:
