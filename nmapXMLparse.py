@@ -14,7 +14,7 @@ parser.add_argument('-x', help='Path to .xml file.', dest='xml', action='store')
 parser.add_argument('-o', help='Output file name. Otherwise STDOUT', dest='outName', action='store')
 parser.add_argument('-v', help='Verbose.', dest='verbose', action='store_true', default=False)
 parser.add_argument('--ms17_010', help='Only parse for ms17-010.', dest='ms17', action='store_true', default=False)
-parser.add_argument('--ms08_067', help='Only parse for ms08-06.', dest='ms08', action='store_true', default=False)
+parser.add_argument('--ms08_067', help='Only parse for ms08-067.', dest='ms08', action='store_true', default=False)
 if len(sys.argv)==1:
 	parser.print_help()
 	sys.exit(1)
@@ -28,6 +28,18 @@ except ValueError:
 	sys.exit()
 
 overwrite = False
+line = ""
+ms08 = False
+ms17 = False
+
+if not opts.ms08 and not opts.ms17:
+	ms08 = True
+	ms17 = True
+if opts.ms08:
+	ms08  = True
+if opts.ms17:
+	ms17 = True
+
 
 if opts.outName:
 	if os.path.isfile(opts.outName):
@@ -63,38 +75,41 @@ for i in nmap.nmaprun.host:
 	for script in i.hostscript.script:
 		try:
 			if script["id"] == "smb-vuln-ms08-067":
-				for table in script.table:
-					if table["key"] == "CVE-2008-4250":
-						for elem in table.elem:
-							if elem["key"] == "state":
-								try:
-									for hostname in i.hostnames.hostname:
-										line = (i.address["addr"] + "\t" + elem.cdata + "\tms08-067\t" + hostname["name"])
-								except AttributeError:
-									line = (i.address["addr"] + "\t" + elem.cdata + "\tms08-067")
-			if script["id"] == "smb-vuln-ms17-010":
-				try:
+				if ms08:
 					for table in script.table:
-						if table["key"] == "CVE-2017-0143":
+						if table["key"] == "CVE-2008-4250":
 							for elem in table.elem:
 								if elem["key"] == "state":
 									try:
 										for hostname in i.hostnames.hostname:
-											line = (i.address["addr"] + "\t" + elem.cdata + "\tms17-010\t" + hostname["name"])
+											line = (i.address["addr"] + "\t" + elem.cdata + "\tms08-067\t" + hostname["name"])
 									except AttributeError:
-										line = (i.address["addr"] + "\t" + elem.cdata + "\tms17-010")
-				except AttributeError:
+										line = (i.address["addr"] + "\t" + elem.cdata + "\tms08-067")
+			if script["id"] == "smb-vuln-ms17-010":
+				if ms17:
 					try:
-						for hostname in i.hostnames.hostname:
-							line = (i.address["addr"] + "\t" + script["output"] + "\tms17-010\t" + hostname["name"])
+						for table in script.table:
+							if table["key"] == "CVE-2017-0143":
+								for elem in table.elem:
+									if elem["key"] == "state":
+										try:
+											for hostname in i.hostnames.hostname:
+												line = (i.address["addr"] + "\t" + elem.cdata + "\tms17-010\t" + hostname["name"])
+										except AttributeError:
+											line = (i.address["addr"] + "\t" + elem.cdata + "\tms17-010")
 					except AttributeError:
-						line = (i.address["addr"] + "\t" + script["output"] + "\tms17-010")
+						try:
+							for hostname in i.hostnames.hostname:
+								line = (i.address["addr"] + "\t" + script["output"] + "\tms17-010\t" + hostname["name"])
+						except AttributeError:
+							line = (i.address["addr"] + "\t" + script["output"] + "\tms17-010")
 		except AttributeError:
 			try:
 				line = (i.address["addr"] + "\tNOT VULNERABLE" + "\t" + i.hostnames.hostname["name"])
 			except AttributeError:
 				line = (i.address["addr"] + "\tNOT VULNERABLE")
 		
-		if opts.verbose or not opts.outName:
-			print(line)
-		output(line)
+		if line:
+			if opts.verbose or not opts.outName:
+				print(line)
+			output(line)
