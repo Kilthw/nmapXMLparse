@@ -43,7 +43,7 @@ if opts.ms17:
 
 if opts.outName:
 	if os.path.isfile(opts.outName):
-		for retry in range(5):
+		for retry in range(3):
 			answer =  input("\n[?] Do you want to overwrite " + opts.outName + "? [Y/n]: ") or "y"
 			if answer.lower() in ("no", "n"):
 				print("[*] Appending to existing file...")
@@ -54,6 +54,9 @@ if opts.outName:
 				print("[*] Replacing existing file...")
 				overwrite = True
 				break
+		else:
+			print("[!] You have provided to many invalid choices. Goodbye.")
+			sys.exit()
 		
 	else:
 		os.remove(opts.outName)
