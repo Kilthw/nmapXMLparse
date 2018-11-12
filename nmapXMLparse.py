@@ -4,9 +4,9 @@ import argparse
 import os
 
 usage = """
-$ python ./%(prog)s -d <path to .xml file> -o <output file>
+$ python ./%(prog)s -x <path to .xml file> -o <output file>
 
-Example: ./%(prog)s -d ./nmap.xml -o output.tsv
+Example: ./%(prog)s -x ./nmap.xml -o output.tsv
 
 """
 parser = argparse.ArgumentParser(usage=usage)
@@ -52,14 +52,13 @@ if opts.outName:
 				print("[!] %s is not a valid choice." %answer)
 			else:
 				print("[*] Replacing existing file...")
+				os.remove(opts.outName)
 				overwrite = True
 				break
 		else:
 			print("\n[!] You have provided to many invalid choices. Goodbye.")
 			sys.exit()
 		
-	else:
-		os.remove(opts.outName)
 
 def output(line):
 	global overwrite
@@ -75,8 +74,8 @@ def output(line):
 			f.close()
 
 for i in nmap.nmaprun.host:
-	for script in i.hostscript.script:
-		try:
+	try:
+		for script in i.hostscript.script:
 			if script["id"] == "smb-vuln-ms08-067":
 				if ms08:
 					for table in script.table:
@@ -106,13 +105,13 @@ for i in nmap.nmaprun.host:
 								line = (i.address["addr"] + "\t" + script["output"] + "\tms17-010\t" + hostname["name"])
 						except AttributeError:
 							line = (i.address["addr"] + "\t" + script["output"] + "\tms17-010")
+	except AttributeError:
+		try:
+			line = (i.address["addr"] + "\tNOT VULNERABLE" + "\t" + i.hostnames.hostname["name"])
 		except AttributeError:
-			try:
-				line = (i.address["addr"] + "\tNOT VULNERABLE" + "\t" + i.hostnames.hostname["name"])
-			except AttributeError:
-				line = (i.address["addr"] + "\tNOT VULNERABLE")
+			line = (i.address["addr"] + "\tNOT VULNERABLE")
 		
-		if line:
-			if opts.verbose or not opts.outName:
-				print(line)
-			output(line)
+	if line:
+		if opts.verbose or not opts.outName:
+			print(line)
+		output(line)
