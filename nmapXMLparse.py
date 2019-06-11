@@ -42,6 +42,7 @@ if opts.ms17:
 
 
 if opts.outName:
+	opts.outName = os.path.splitext(opts.outName)[0]+'.tsv'
 	if os.path.isfile(opts.outName):
 		for retry in range(3):
 			answer =  input("\n[?] Do you want to overwrite " + opts.outName + "? [Y/n]: ") or "y"
