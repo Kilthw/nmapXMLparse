@@ -12,6 +12,7 @@ Example: ./%(prog)s -x ./nmap.xml -o output.tsv
 parser = argparse.ArgumentParser(usage=usage)
 parser.add_argument('-x', help='Path to .xml file.', dest='xml', action='store')
 parser.add_argument('-o', help='Output file name. Otherwise STDOUT', dest='outName', action='store')
+parser.add_argument('--outputScope', help='Output file name.', dest='outScope', action='store')
 parser.add_argument('-v', help='Verbose.', dest='verbose', action='store_true', default=False)
 parser.add_argument('--ms17_010', help='Only parse for ms17-010.', dest='ms17', action='store_true', default=False)
 parser.add_argument('--ms08_067', help='Only parse for ms08-067.', dest='ms08', action='store_true', default=False)
@@ -40,6 +41,9 @@ if opts.ms08:
 if opts.ms17:
 	ms17 = True
 
+if opts.outScope:
+	if os.path.isfile(opts.outScope):
+		os.remove(opts.outScope)
 
 if opts.outName:
 	if os.path.isfile(opts.outName):
@@ -73,6 +77,12 @@ def output(line):
 				f.write(line + "\n")
 			f.close()
 
+def outputScope(line):
+	if opts.outScope:
+		with open(opts.outScope, "a") as f:
+			f.write(line + "\n")
+		f.close()
+
 for i in nmap.nmaprun.host:
 	try:
 		for script in i.hostscript.script:
@@ -85,8 +95,10 @@ for i in nmap.nmaprun.host:
 									try:
 										for hostname in i.hostnames.hostname:
 											line = (i.address["addr"] + "\t" + elem.cdata + "\tms08-067\t" + hostname["name"])
+											outputScope(hostname["name"])
 									except AttributeError:
 										line = (i.address["addr"] + "\t" + elem.cdata + "\tms08-067")
+									outputScope(i.address["addr"])
 			if script["id"] == "smb-vuln-ms17-010":
 				if ms17:
 					try:
@@ -97,14 +109,18 @@ for i in nmap.nmaprun.host:
 										try:
 											for hostname in i.hostnames.hostname:
 												line = (i.address["addr"] + "\t" + elem.cdata + "\tms17-010\t" + hostname["name"])
+												outputScope(hostname["name"])
 										except AttributeError:
 											line = (i.address["addr"] + "\t" + elem.cdata + "\tms17-010")
+										outputScope(i.address["addr"])
 					except AttributeError:
 						try:
 							for hostname in i.hostnames.hostname:
 								line = (i.address["addr"] + "\t" + script["output"] + "\tms17-010\t" + hostname["name"])
+								outputScope(hostname["name"])
 						except AttributeError:
 							line = (i.address["addr"] + "\t" + script["output"] + "\tms17-010")
+						outputScope(i.address["addr"])
 	except AttributeError:
 		try:
 			line = (i.address["addr"] + "\tNOT VULNERABLE" + "\t" + i.hostnames.hostname["name"])
